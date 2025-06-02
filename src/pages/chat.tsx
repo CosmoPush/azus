@@ -5,7 +5,7 @@ import { ExampleList } from "../components/example-list";
 import { ChatInput } from "../components/chat-input";
 import { type ChatMessage, type Chat, chatStorage } from "../lib/chat-storage";
 import { FaCopy, FaCheck, FaVolumeUp } from "react-icons/fa";
-import { Tooltip } from "../components/tooltip";
+import { Tooltip } from "../components/ui/tooltip";
 
 export function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
