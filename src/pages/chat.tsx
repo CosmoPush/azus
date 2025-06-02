@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Sidebar } from "../components/sidebar";
 import { Header } from "../components/header";
 import { ExampleList } from "../components/example-list";
 import { ChatInput } from "../components/chat-input";
 import { type ChatMessage, type Chat, chatStorage } from "../lib/chat-storage";
+import { FaCopy, FaCheck, FaVolumeUp } from "react-icons/fa";
+import { Tooltip } from "../components/tooltip";
 
 export function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -57,7 +59,7 @@ export function ChatPage() {
         };
         const chatWithBotResponse = chatStorage.addMessage(
           currentChat.id,
-          botMessage,
+          botMessage
         );
 
         if (chatWithBotResponse) {
@@ -70,7 +72,7 @@ export function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-gradient-to-b from-[#A259FF] via-[#3B2EFF] to-black flex flex-col md:flex-row">
+    <div className="h-screen w-screen bg-gradient-to-b from-[#A259FF] via-[#3B2EFF] to-black flex flex-col md:flex-row">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -80,21 +82,27 @@ export function ChatPage() {
       />
       <div className="flex-1 flex flex-col">
         <Header onBurgerClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 w-full">
+        <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 w-full overflow-y-auto">
           {messages.length > 0 ? (
-            <div className="flex flex-col gap-4 w-full">
+            <div className="flex flex-col gap-8 w-full">
               {messages.map((message, idx) => (
-                <div
-                  key={idx}
-                  className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
-                >
+                <div key={idx}>
                   <div
-                    className={`rounded-2xl px-4 py-2 max-w-[80%] break-words shadow-md text-white text-base md:text-lg ${
-                      message.sender === "user" ? "bg-sky-500" : "bg-white/10"
+                    className={`flex ${
+                      message.sender === "user"
+                        ? "justify-end"
+                        : "justify-start"
                     }`}
                   >
-                    {message.text}
+                    <div
+                      className={`rounded-2xl px-4 py-2 max-w-[80%] break-words shadow-md text-white text-base md:text-lg ${
+                        message.sender === "user" ? "bg-sky-500" : "bg-white/10"
+                      }`}
+                    >
+                      {message.text}
+                    </div>
                   </div>
+                  {message.sender === "bot" && <BotTools text={message.text} />}
                 </div>
               ))}
             </div>
@@ -104,6 +112,60 @@ export function ChatPage() {
         </main>
         <ChatInput handleSubmit={handleSubmit} />
       </div>
+    </div>
+  );
+}
+
+function BotTools({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => setCopied(false), 5000);
+    } catch (err) {
+      console.error("Copy failed:", err);
+    }
+  };
+
+  const handleSpeak = () => {
+    if (window.speechSynthesis.speaking) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      utterance.voice = voices[0];
+    }
+    speechSynthesis.speak(utterance);
+  };
+
+  return (
+    <div className="flex items-center gap-2 pt-2 pl-2">
+      <Tooltip label={copied ? "Copied!" : "Copy text"}>
+        <button
+          className="cursor-pointer hover:opacity-80 transition-all"
+          onClick={handleCopy}
+        >
+          {copied ? (
+            <FaCheck className="text-white/80" />
+          ) : (
+            <FaCopy className="text-white/80" />
+          )}
+        </button>
+      </Tooltip>
+
+      <Tooltip label="Play text">
+        <button
+          className="cursor-pointer hover:opacity-80 transition-all"
+          onClick={handleSpeak}
+        >
+          <FaVolumeUp className="text-white/80" />
+        </button>
+      </Tooltip>
     </div>
   );
 }
