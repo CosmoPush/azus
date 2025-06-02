@@ -277,7 +277,7 @@ function ChatList({
 }) {
   return (
     <ul className="space-y-1">
-      {[...chats,...chats,...chats,...chats,...chats,...chats,...chats,...chats].map((chat) => (
+      {chats.map((chat) => (
         <li
           key={chat.id}
           className={`flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer group hover:bg-white/10 transition-colors ${

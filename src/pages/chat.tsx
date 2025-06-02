@@ -12,6 +12,12 @@ export function ChatPage() {
   const [messages, setMessages] = useState<Array<ChatMessage>>([]);
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
 
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   useEffect(() => {
     const chats = chatStorage.getChats();
 
@@ -45,30 +51,99 @@ export function ChatPage() {
   const handleSubmit = (value: string) => {
     if (!currentChat) return;
 
-    const userMessage: ChatMessage = { text: value, sender: "user" };
-    const updatedChat = chatStorage.addMessage(currentChat.id, userMessage);
+    const userMessage: ChatMessage = {
+      text: value,
+      sender: "user",
+      status: "waiting",
+    };
 
-    if (updatedChat) {
-      setCurrentChat(updatedChat);
-      setMessages(updatedChat.messages);
-      chatStorage.notifyChange();
-      setTimeout(() => {
-        const botMessage: ChatMessage = {
-          text: `echo: ${value}`,
-          sender: "bot",
-        };
-        const chatWithBotResponse = chatStorage.addMessage(
-          currentChat.id,
-          botMessage
+    const updatedChat = chatStorage.addMessage(currentChat.id, userMessage);
+    if (!updatedChat) return;
+
+    setCurrentChat(updatedChat);
+    setMessages(updatedChat.messages);
+    chatStorage.notifyChange();
+
+    setTimeout(() => {
+      const failed = Math.random() < 0.3;
+
+      if (failed) {
+        const failedMessages = [...updatedChat.messages];
+        failedMessages[failedMessages.length - 1].status = "failed";
+        const failedChat = { ...updatedChat, messages: failedMessages };
+        chatStorage.saveChat(failedChat);
+        setCurrentChat(failedChat);
+        setMessages(failedMessages);
+        return;
+      }
+
+      const successMessages = [...updatedChat.messages];
+      successMessages[successMessages.length - 1].status = "received";
+
+      const botMessage: ChatMessage = {
+        text: `echo: ${value}`,
+        sender: "bot",
+      };
+
+      const newChat = {
+        ...updatedChat,
+        messages: [...successMessages, botMessage],
+      };
+      chatStorage.saveChat(newChat);
+      setCurrentChat(newChat);
+      setMessages(newChat.messages);
+    }, 1000);
+  };
+
+  const retryMessage = (messageToRetry: ChatMessage) => {
+    if (!currentChat) return;
+
+    const updatedMessages = currentChat.messages.map((msg) =>
+      msg.text === messageToRetry.text && msg.sender === "user"
+        ? { ...msg, status: "waiting" }
+        : msg
+    );
+
+    const updatedChat: Chat = { ...currentChat, messages: updatedMessages };
+    chatStorage.saveChat(updatedChat);
+    setCurrentChat(updatedChat);
+    setMessages(updatedMessages);
+
+    setTimeout(() => {
+      const failed = Math.random() < 0.3;
+      if (failed) {
+        const failedMessages = updatedMessages.map((msg) =>
+          msg.text === messageToRetry.text && msg.sender === "user"
+            ? { ...msg, status: "failed" }
+            : msg
         );
 
-        if (chatWithBotResponse) {
-          setCurrentChat(chatWithBotResponse);
-          setMessages(chatWithBotResponse.messages);
-          chatStorage.notifyChange();
-        }
-      }, 500);
-    }
+        const failedChat = { ...updatedChat, messages: failedMessages };
+        chatStorage.saveChat(failedChat);
+        setCurrentChat(failedChat);
+        setMessages(failedMessages);
+        return;
+      }
+
+      const successMessages = updatedMessages.map((msg) =>
+        msg.text === messageToRetry.text && msg.sender === "user"
+          ? { ...msg, status: "received" }
+          : msg
+      );
+
+      const botMessage: ChatMessage = {
+        text: `echo: ${messageToRetry.text}`,
+        sender: "bot",
+      };
+
+      const chatWithBot = {
+        ...updatedChat,
+        messages: [...successMessages, botMessage],
+      };
+      chatStorage.saveChat(chatWithBot);
+      setCurrentChat(chatWithBot);
+      setMessages(chatWithBot.messages);
+    }, 1000);
   };
 
   return (
@@ -88,10 +163,8 @@ export function ChatPage() {
               {messages.map((message, idx) => (
                 <div key={idx}>
                   <div
-                    className={`flex ${
-                      message.sender === "user"
-                        ? "justify-end"
-                        : "justify-start"
+                    className={`flex gap-1 flex-col ${
+                      message.sender === "user" ? "items-end" : "items-start"
                     }`}
                   >
                     <div
@@ -101,10 +174,28 @@ export function ChatPage() {
                     >
                       {message.text}
                     </div>
+                    {message.sender === "user" && (
+                      <div className="pl-2 pt-1 text-xs text-white/70 items-center gap-2 flex justify-end">
+                        {message.status === "waiting" && "⌛ Waiting..."}
+                        {message.status === "received" && "✅ Sent"}
+                        {message.status === "failed" && (
+                          <>
+                            ❌ Failed
+                            <button
+                              className="underline text-blue-300 hover:text-blue-100"
+                              onClick={() => retryMessage(message)}
+                            >
+                              Retry
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                   {message.sender === "bot" && <BotTools text={message.text} />}
                 </div>
               ))}
+              <div ref={bottomRef} />
             </div>
           ) : (
             <ExampleList handleSubmit={handleSubmit} />
@@ -145,15 +236,16 @@ function BotTools({ text }: { text: string }) {
 
   return (
     <div className="flex items-center gap-2 pt-2 pl-2">
+      <p className="text-white/70 text-xs">📦 Received</p>
       <Tooltip label={copied ? "Copied!" : "Copy text"}>
         <button
           className="cursor-pointer hover:opacity-80 transition-all"
           onClick={handleCopy}
         >
           {copied ? (
-            <FaCheck className="text-white/80" />
+            <FaCheck className="text-white/80 size-3" />
           ) : (
-            <FaCopy className="text-white/80" />
+            <FaCopy className="text-white/80 size-3" />
           )}
         </button>
       </Tooltip>
@@ -163,7 +255,7 @@ function BotTools({ text }: { text: string }) {
           className="cursor-pointer hover:opacity-80 transition-all"
           onClick={handleSpeak}
         >
-          <FaVolumeUp className="text-white/80" />
+          <FaVolumeUp className="text-white/80 size-3" />
         </button>
       </Tooltip>
     </div>

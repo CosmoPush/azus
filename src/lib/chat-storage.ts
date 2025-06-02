@@ -1,7 +1,7 @@
 export interface ChatMessage {
   text: string;
   sender: "user" | "bot";
-  status?: "waiting" | "received" | "failed"; // waiting | received | failed
+  status?: string; // waiting | received | failed
 }
 
 export interface Chat {
