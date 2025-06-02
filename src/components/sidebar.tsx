@@ -48,7 +48,7 @@ export const Sidebar = ({
         )}
       </AnimatePresence>
 
-      <aside className="hidden md:flex md:flex-col md:w-80 md:min-h-screen bg-black/90 text-white shadow-xl p-6 pt-10">
+      <aside className="hidden md:flex md:flex-col md:w-80 md:min-h-screen bg-black/90 text-white shadow-xl p-6 pt-10 overflow-y-auto">
         <SidebarContent
           onNewChat={onNewChat}
           currentChatId={currentChatId}
