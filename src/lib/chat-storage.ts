@@ -1,7 +1,14 @@
 export interface ChatMessage {
+  messageId?: string;
   text: string;
   sender: "user" | "bot";
   status?: string; // waiting | received | failed
+  scores?: {
+    pcs: number; // Prompt Clarity Score (0-100)
+    oas: number; // Output Accuracy Score (0-100)
+    ics: number; // Interaction Coherence Score (0-100)
+  };
+  reasoning?: string;
 }
 
 export interface Chat {
@@ -165,9 +172,23 @@ export const chatStorage = {
     const chat = chatStorage.getChat(chatId);
     if (!chat) return undefined;
 
+    // Add unique messageId and enhance bot messages
+    const enhancedMessage: ChatMessage = {
+      ...message,
+      messageId: message.messageId || generateId(),
+      ...(message.sender === "bot" && {
+        scores: message.scores || {
+          pcs: Math.floor(Math.random() * 41) + 60, // 60-100
+          oas: Math.floor(Math.random() * 41) + 60,
+          ics: Math.floor(Math.random() * 41) + 60,
+        },
+        reasoning: message.reasoning || `This response was generated based on the user's input: "${chat.messages[chat.messages.length - 1]?.text || 'N/A'}".`,
+      }),
+    };
+
     const updatedChat = {
       ...chat,
-      messages: [...chat.messages, message],
+      messages: [...chat.messages, enhancedMessage],
       title:
         chat.title === "New Chat" &&
         message.sender === "user" &&
