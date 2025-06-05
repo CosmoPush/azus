@@ -14,8 +14,6 @@ import {
 import { Tooltip } from "../components/ui/tooltip";
 import { motion } from "framer-motion";
 
-// TODO: fix scrollIntoView. scroll not every time the message state changes
-
 export function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [messages, setMessages] = useState<Array<ChatMessage>>([]);
@@ -27,7 +25,20 @@ export function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const chatContainer = bottomRef.current?.parentElement;
+    if (!chatContainer) return;
+
+    const isNearBottom =
+      chatContainer.scrollHeight -
+        chatContainer.scrollTop -
+        chatContainer.clientHeight <
+      100;
+    const isBotMessage =
+      messages.length > 0 && messages[messages.length - 1].sender === "bot";
+
+    if (isNearBottom || isBotMessage) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -173,11 +184,11 @@ export function ChatPage() {
         return;
       }
 
-      const successMessages = updatedMessages.map((msg) =>
-        msg.messageId === messageToRetry.messageId && msg.sender === "user"
-          ? { ...msg, status: "sent" }
-          : msg
-      );
+      // const successMessages = updatedMessages.map((msg) =>
+      //   msg.messageId === messageToRetry.messageId && msg.sender === "user"
+      //     ? { ...msg, status: "sent" }
+      //     : msg
+      // );
 
       const botMessage: ChatMessage = {
         text: `echo: ${messageToRetry.text}`,
@@ -212,6 +223,7 @@ export function ChatPage() {
         currentChat,
         message,
       });
+      alert("Unexpected error: invalid message or chat.");
       return;
     }
 
@@ -295,7 +307,7 @@ export function ChatPage() {
   };
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-b from-[#A259FF] via-[#3B2EFF] to-black flex flex-col md:flex-row">
+    <div className="h-screen w-screen max-h-screen flex flex-col md:flex-row">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -305,7 +317,7 @@ export function ChatPage() {
       />
       <div className="flex-1 flex flex-col">
         <Header onBurgerClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 w-full overflow-y-auto">
+        <main className="flex-1 flex flex-col items-center px-4 py-8 w-full overflow-y-auto max-h-[calc(100vh-80px-74px)] md:max-h-[calc(100vh-120px-74px)]">
           {messages.length > 0 ? (
             <div className="flex flex-col gap-8 w-full">
               {messages.map((message, idx) => (
@@ -340,21 +352,10 @@ export function ChatPage() {
                       </div>
                     )}
                     {message.sender === "bot" && message.scores && (
-                      <div className="pl-2 pt-2 flex flex-col gap-1">
-                        <div className="flex gap-4">
-                          <ScoreDisplay
-                            label="PCS"
-                            value={message.scores.pcs}
-                          />
-                          <ScoreDisplay
-                            label="OAS"
-                            value={message.scores.oas}
-                          />
-                          <ScoreDisplay
-                            label="ICS"
-                            value={message.scores.ics}
-                          />
-                        </div>
+                      <div className="pl-2 pt-2 flex flex-col gap-1 sm:flex-row sm:gap-4">
+                        <ScoreDisplay label="PCS" value={message.scores.pcs} />
+                        <ScoreDisplay label="OAS" value={message.scores.oas} />
+                        <ScoreDisplay label="ICS" value={message.scores.ics} />
                       </div>
                     )}
                   </div>
@@ -453,7 +454,7 @@ function BotTools({
   };
 
   return (
-    <div className="flex items-center gap-2 pt-2 pl-2">
+    <div className="flex items-center gap-2 pt-2 pl-2 align-middle">
       <p className="text-white/70 text-xs">📦 Received</p>
       <Tooltip label={copied ? "Copied!" : "Copy text"}>
         <button

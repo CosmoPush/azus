@@ -25,3 +25,10 @@ h1 {
   line-height: 1.1;
 }
 
+body {
+  height: 100vh;
+  background: linear-gradient(to bottom, #A259FF, #3B2EFF, #000000);
+  background-repeat: no-repeat;
+  background-size: auto 100%;
+  -webkit-overflow-scrolling: touch;
+}

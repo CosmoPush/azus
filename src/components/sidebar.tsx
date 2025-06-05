@@ -34,7 +34,7 @@ export const Sidebar = ({
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "tween", duration: 0.3 }}
-              className="fixed top-0 left-0 z-30 h-screen w-72 bg-black/90 text-white shadow-2xl p-4 flex flex-col gap-6 md:hidden"
+              className="fixed top-0 left-0 z-30 h-screen w-72 bg-black/90 text-white shadow-2xl p-4 flex flex-col gap-6 md:hidden overflow-y-auto"
             >
               <SidebarContent
                 onClose={onClose}
@@ -110,7 +110,7 @@ function SidebarContent({
     if (isCurrentChat && onSelectChat) {
       if (updatedChats.length > 0) {
         const mostRecentChat = updatedChats.sort(
-          (a, b) => b.createdAt - a.createdAt,
+          (a, b) => b.createdAt - a.createdAt
         )[0];
         onSelectChat(mostRecentChat.id);
       } else if (onNewChat) {
@@ -155,26 +155,26 @@ function SidebarContent({
   };
 
   const filteredChats = chats.filter((chat) =>
-    chat.title.toLowerCase().includes(searchTerm.toLowerCase()),
+    chat.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const today = new Date().setHours(0, 0, 0, 0);
   const yesterday = today - 86400000;
 
   const todayChats = filteredChats.filter(
-    (chat) => new Date(chat.createdAt).setHours(0, 0, 0, 0) === today,
+    (chat) => new Date(chat.createdAt).setHours(0, 0, 0, 0) === today
   );
 
   const yesterdayChats = filteredChats.filter(
-    (chat) => new Date(chat.createdAt).setHours(0, 0, 0, 0) === yesterday,
+    (chat) => new Date(chat.createdAt).setHours(0, 0, 0, 0) === yesterday
   );
 
   const olderChats = filteredChats.filter(
-    (chat) => new Date(chat.createdAt).setHours(0, 0, 0, 0) < yesterday,
+    (chat) => new Date(chat.createdAt).setHours(0, 0, 0, 0) < yesterday
   );
 
   return (
-    <div className="flex flex-col w-full items-stretch justify-start relative">
+    <div className="flex flex-col w-full items-stretch justify-start">
       {onClose && isMobile && (
         <button
           className="h-12 w-12 md:hidden bg-white/10 rounded-full p-2 hover:bg-white/20 transition z-40 flex items-center justify-center ml-auto mb-3"
@@ -199,7 +199,7 @@ function SidebarContent({
         <input
           type="text"
           placeholder="Search..."
-          className="w-full bg-white/10 rounded-full px-4 py-2 pr-10 text-white placeholder-white/60 focus:outline-none"
+          className="w-full bg-white/10 rounded-full px-4 py-2 pr-10 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -287,7 +287,9 @@ function ChatList({
         >
           <div className="flex items-center gap-2 truncate">
             <span
-              className={`w-2 h-2 rounded-full ${chat.isPermanent ? "bg-green-400" : "bg-[#A259FF]"}`}
+              className={`w-2 h-2 rounded-full ${
+                chat.isPermanent ? "bg-green-400" : "bg-[#A259FF]"
+              }`}
             />
             <span className="truncate text-sm">{chat.title}</span>
           </div>

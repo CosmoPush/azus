@@ -117,7 +117,7 @@ export function ChatContextMenu({
               onDelete(chatId);
               onClose();
             }}
-            className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700 text-red-400"
+            className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-zinc-700 text-red-400"
           >
             <FiTrash2 size={16} />
             Delete
